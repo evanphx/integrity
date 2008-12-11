@@ -24,10 +24,14 @@ module Integrity
     def build(commit_identifier="HEAD")
       return if building?
       update_attributes(:building => true)
-      Builder.new(self).build(commit_identifier)
-    ensure
-      update_attributes(:building => false)
-      send_notifications
+      Thread.new do
+        begin
+          Builder.new(self).build(commit_identifier)
+        ensure
+          update_attributes(:building => false)
+          send_notifications
+        end
+      end
     end
 
     def last_build
